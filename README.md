@@ -1,6 +1,6 @@
 # 비밀번호 금고지기
 
-**한국어** | [English (영문 저장소)](https://github.com/SLA3DP/password-site-en)
+**한국어** | [English (영문 저장소)](https://github.com/wjx-kinetics/password-site-en)
 
 지금 쓰는 비밀번호가 공격자에게 얼마 만에 뚫리는지 계산해 보여 주고, 대신 쓸 안전한 비밀번호를 만들어 주는 웹사이트입니다. 파이썬(Flask)으로 만들었고 HTTPS로 접속합니다.
 
@@ -11,7 +11,7 @@
 ## 발표 자료
 
 - [발표 자료 (PDF)](docs/presentation-ko.pdf)
-- 영문판은 [영문 저장소](https://github.com/SLA3DP/password-site-en)에 있습니다.
+- 영문판은 [영문 저장소](https://github.com/wjx-kinetics/password-site-en)에 있습니다.
 
 ## 만든 이유
 
@@ -39,7 +39,7 @@
 이 페이지 위쪽의 초록색 **Code** 버튼 → **Download ZIP**을 눌러 받은 뒤 압축을 풉니다. git을 쓴다면 다음 명령으로 받아도 됩니다.
 
 ```
-git clone https://github.com/SLA3DP/password-site.git
+git clone https://github.com/wjx-kinetics/password-site.git
 ```
 
 ### 2. 실행하기
@@ -179,4 +179,4 @@ python -m venv .venv
 
 ## 만든 사람
 
-이주안 · 장원준 · 정시우 ∙ Seoul Robotics High School · [github.com/SLA3DP](https://github.com/SLA3DP)
+이주안 · 장원준 · 정시우 ∙ Seoul Robotics High School · [github.com/wjx-kinetics](https://github.com/wjx-kinetics)
