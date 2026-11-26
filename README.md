@@ -6,6 +6,11 @@
 |---|---|---|
 | ![약한 비밀번호 진단 화면](docs/screenshot-weak.jpg) | ![강한 비밀번호 진단 화면](docs/screenshot-strong.jpg) | ![비밀번호 생성 화면](docs/screenshot-generate.jpg) |
 
+## 발표 자료
+
+- [발표 자료 (한국어, PDF)](docs/presentation-ko.pdf)
+- [Presentation (English, PDF)](docs/presentation-en.pdf)
+
 ## 만든 이유
 
 비밀번호 유출 사고가 계속 일어나지만, 내 비밀번호가 실제로 얼마나 약한지는 체감하기 어렵습니다. "8자 이상, 특수문자 포함" 같은 규칙만 지킨 `qwer1234!` 같은 비밀번호는 규칙은 통과해도 1초 안에 뚫립니다. 이 사이트는 그 사실을 년·일·시간·분·초 단위의 시간으로 바꿔서 보여 줍니다.
