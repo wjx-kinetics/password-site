@@ -1,5 +1,7 @@
 # 비밀번호 금고지기
 
+**한국어** | [English](README.en.md)
+
 지금 쓰는 비밀번호가 공격자에게 얼마 만에 뚫리는지 계산해 보여 주고, 대신 쓸 안전한 비밀번호를 만들어 주는 웹사이트입니다. 파이썬(Flask)으로 만들었고 HTTPS로 접속합니다.
 
 | 약한 비밀번호 | 강한 비밀번호 | 새 비밀번호 만들기 |
@@ -8,8 +10,8 @@
 
 ## 발표 자료
 
-- [발표 자료 (한국어, PDF)](docs/presentation-ko.pdf)
-- [Presentation (English, PDF)](docs/presentation-en.pdf)
+- [발표 자료 (PDF)](docs/presentation-ko.pdf)
+- 영문판은 [English README](README.en.md)에 있습니다.
 
 ## 만든 이유
 
@@ -177,4 +179,4 @@ python -m venv .venv
 
 ## 만든 사람
 
-WONJOON ∙ Seoul Robotics High School · [github.com/SLA3DP](https://github.com/SLA3DP)
+이주안 · 장원준 · 정시우 ∙ Seoul Robotics High School · [github.com/SLA3DP](https://github.com/SLA3DP)
