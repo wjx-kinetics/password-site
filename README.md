@@ -2,6 +2,8 @@
 
 **한국어** | [English (영문 저장소)](https://github.com/wjx-kinetics/password-site-en)
 
+[![tests](https://github.com/wjx-kinetics/password-site/actions/workflows/tests.yml/badge.svg)](https://github.com/wjx-kinetics/password-site/actions/workflows/tests.yml)
+
 지금 쓰는 비밀번호가 공격자에게 얼마 만에 뚫리는지 계산해 보여 주고, 대신 쓸 안전한 비밀번호를 만들어 주는 웹사이트입니다. 파이썬(Flask)으로 만들었고 HTTPS로 접속합니다.
 
 | 약한 비밀번호 | 강한 비밀번호 | 새 비밀번호 만들기 |
@@ -131,7 +133,11 @@ python -m venv .venv
 
 여덟 수치의 평균은 초당 1046억 회입니다. 기존 값이 약 10배 낮았으므로 초당 1000억 회로 바꾸었습니다. 그 결과 무작위 10자 비밀번호(`kT7#mq2xLp`)는 189년에서 19년으로 줄어 "보통"이 되었고, 한 글자를 더한 11자(`kT7#mq2xLp9`)는 1802년으로 "강함"입니다.
 
-이 값은 대부분 그래픽카드 한 장 기준입니다. 카드를 여러 장 쓰는 공격자는 그만큼 더 빠릅니다.
+이 값이 다루지 못하는 범위는 다음과 같습니다.
+
+- 네 사례 중 셋은 그래픽카드 한 장 기준입니다. 카드를 열 장 쓰는 공격자는 열 배 빠릅니다.
+- 더 빠른 해시도 있습니다. 윈도우가 쓰는 NTLM은 RTX 5090 한 장에서 초당 3401억 회입니다.
+- 느린 해시는 훨씬 느립니다. bcrypt는 RTX 4090에서 반복 32회 기준 초당 18만 4천 회이고, 현실적인 설정인 반복 1024회로 환산하면 초당 약 5750회입니다(직접 계산). 사이트의 "느린 해시" 줄은 초당 1만 회를 씁니다.
 
 출처: Chick3nman의 hashcat 벤치마크([RTX 3090](https://gist.github.com/Chick3nman/e4fcee00cb6d82874dace72106d73fef), [RTX 4090](https://gist.github.com/Chick3nman/32e662a5bb63bc4f51b847bb422222fd), [RTX 5090](https://gist.github.com/Chick3nman/09bac0775e6393468c2925c1e1363d5c)), [Infosecurity Magazine의 2012년 클러스터 보도](https://www.infosecurity-magazine.com/news/gpu-cluster-can-crack-any-ntlm-8-character-hashed)
 
@@ -171,6 +177,48 @@ python -m venv .venv
 - **요청 제한**: 한 사람이 10초에 150번을 넘게 요청하면 잠시 막습니다.
 - **기본은 내 컴퓨터 전용**: `--lan` 옵션을 주지 않으면 다른 기기에서 접속할 수 없습니다.
 
+## 실제 데이터로 확인한 결과
+
+사이트의 판정이 현실과 맞는지 확인하려고, 예시 비밀번호를 [Pwned Passwords](https://haveibeenpwned.com/Passwords)에서 조회하였습니다. 실제 유출 사고에서 나온 비밀번호를 모아 둔 공개 자료입니다. 조회에는 해시의 앞 5글자만 보내는 범위 조회 방식을 썼습니다. 횟수는 2026년 11월 26일 기준입니다.
+
+| 비밀번호 | 실제 유출에서 발견된 횟수 | 이 사이트의 판정 |
+|---|---|---|
+| `password` | 52,373,976 | 즉시 뚫림 |
+| `P@ssw0rd` | 6,421,554 | 즉시 뚫림 |
+| `qwer1234` | 3,436,774 | 즉시 뚫림 |
+| `qwer1234!` | 48,084 | 즉시 뚫림 |
+| `tkfkdgo` (사랑해) | 174,486 | 즉시 뚫림 |
+| `dkssud` (안녕) | 24,239 | 즉시 뚫림 |
+| `qlalfqjsgh` (비밀번호) | 15,976 | 즉시 뚫림 |
+| `dkssud12!` | 3,824 | 즉시 뚫림 |
+| `kT7#mq2xLp` (무작위 10자) | 0 | 보통 |
+| `kT7#mq2xLp9` (무작위 11자) | 0 | 강함 |
+| `hG7#kq9!Zp2x` (무작위 12자) | 0 | 강함 |
+
+이 표에서 알 수 있는 것은 다음과 같습니다.
+
+- `qwer1234!`는 흔한 규칙(8자 이상, 숫자, 특수문자)을 모두 지켰는데도 4만 8천 번 넘게 유출되었습니다.
+- 한글 단어를 영문 자판으로 친 비밀번호가 수만 번씩 나옵니다. 직접 추가한 한국어 단어 목록은 추측이 아니라 실제 습관을 다룹니다.
+- 무작위 비밀번호는 한 번도 나오지 않았습니다.
+
+## 테스트
+
+진단, 시간 계산, 생성 함수와 두 API 주소를 `tests/test_app.py`의 자동 테스트 52개로 확인합니다. 코드를 올릴 때마다 윈도우, 맥, 리눅스에서 파이썬 3.9부터 3.12까지의 버전으로 실행됩니다.
+
+```
+pip install -r requirements-dev.txt
+pytest
+```
+
+테스트가 확인하는 내용은 다음과 같습니다.
+
+- 흔한 비밀번호(`password`, `qwer1234!`, `P@ssw0rd`)는 1분 안에 뚫립니다.
+- 한글 단어를 영문 자판으로 친 것(`dkssud`, `tkfkdgo`)을 한국어 단어로 인식합니다.
+- 무작위 비밀번호는 강함으로 판정되고, 더 긴 무작위 비밀번호는 항상 더 오래 걸립니다.
+- 판정은 정확히 1분, 1일, 1년, 100년에서 바뀝니다.
+- 생성된 비밀번호는 요청한 길이이고, 고른 문자 종류가 모두 들어가며, 옵션을 켜면 헷갈리는 글자가 들어가지 않습니다.
+- 서버는 강한 비밀번호를 응답에 되돌려 보내지 않고, 길이를 8~64로 제한하며, 10초에 150번을 넘게 요청한 사용자를 막습니다.
+
 ## 파일 구성
 
 | 파일 | 역할 |
@@ -180,6 +228,9 @@ python -m venv .venv
 | `static/style.css` | 색과 모양 |
 | `static/app.js` | 서버에 요청을 보내고 결과를 화면에 표시 |
 | `requirements.txt` | 필요한 파이썬 패키지 목록 |
+| `tests/test_app.py` | 자동 테스트 (`pytest`로 실행) |
+| `requirements-dev.txt` | 테스트 실행에 필요한 패키지 목록 |
+| `.github/workflows/tests.yml` | 깃허브에서 테스트를 자동으로 실행하는 설정 |
 | `run.bat`, `run.sh` | 윈도우용, 맥·리눅스용 실행 스크립트 |
 | `index.html` | 파이썬 없이 브라우저만으로 동작하던 초기 버전 |
 
@@ -194,6 +245,95 @@ python -m venv .venv
 
 - 표시되는 시간은 추정치입니다. 실제 공격 속도는 사이트가 비밀번호를 어떻게 저장하는지와 공격자의 장비에 따라 달라집니다.
 - 내 컴퓨터에서 실행하면 비밀번호가 컴퓨터 밖으로 나가지 않습니다. 다른 사람이 운영하는 주소로 접속했을 때는 실제로 쓰는 비밀번호를 그대로 넣지 말고 비슷한 형태의 예시로 확인하는 것이 안전합니다.
+
+## 개발 과정
+
+만들면서 부딪힌 문제와 해결한 방법입니다.
+
+**1. 무작위 비밀번호가 지나치게 약하게 나왔습니다**
+
+- 문제: `zxcvbn`만 쓰면 20자짜리 무작위 비밀번호가 약 32년으로 나옵니다. 실제 강도보다 훨씬 약한 값입니다.
+- 원인: `zxcvbn`은 무작위 구간의 글자를 어떤 문자를 썼든 한 글자당 10가지로 셉니다. 81종의 문자에서 뽑은 비밀번호를 숫자로만 된 것처럼 계산한 것입니다.
+- 해결: 무작위 구간은 실제 문자 종류 수를 써서 `문자 종류 수 ^ 글자 수`로 계산하고, 단어와 패턴에는 `zxcvbn`의 추정을 그대로 썼습니다. 같은 비밀번호가 이제 약 4,684경 년으로 나옵니다. 다시 틀어지지 않도록 테스트(`test_random_part_uses_real_character_count`)를 두었습니다.
+
+**2. 한국어 비밀번호가 지나치게 강하게 나왔습니다**
+
+- 문제: `dkssud12!`가 약 4일로 나왔습니다. `dkssud`는 한글 "안녕"을 영문 자판 상태로 친 것이고, 한국에서 비밀번호를 만드는 아주 흔한 방법입니다.
+- 원인: `zxcvbn`의 단어 목록은 영어라서 `dkssud`를 무작위 글자 여섯 개로 셌습니다.
+- 해결: 흔한 한국어 단어를 한글 그대로와 영문 자판으로 친 형태 모두 목록으로 만들어 `zxcvbn`에 추가 사전으로 넘겼습니다. `dkssud12!`는 이제 1초 안에 뚫립니다.
+
+**3. 사용자가 인증서를 만들지 않아도 HTTPS가 되게 하였습니다**
+
+- 문제: 비밀번호를 다루는 사이트는 암호화 없이 비밀번호를 보내면 안 됩니다. 그런데 인증서를 직접 만드는 일은 어렵고, 흔히 쓰는 도구(`openssl`)는 윈도우에 기본으로 들어 있지 않습니다.
+- 해결: 처음 실행할 때 파이썬이 `cryptography` 라이브러리로 자체 서명 인증서를 직접 만들어 `certs/`에 보관합니다. 같은 코드가 윈도우, 맥, 리눅스에서 동작합니다. 개인 키는 `.gitignore`로 저장소에 올라가지 않게 하였습니다.
+
+**4. 브라우저 전용에서 파이썬 서버로 바꾸었습니다**
+
+- 첫 버전은 모든 계산을 브라우저에서 하였습니다. 계산을 파이썬으로 옮기면서 비밀번호가 서버까지 전달되어야 했고, 이런 도구에서는 분명한 부담입니다.
+- 그 부담을 줄이려고 서버는 기본적으로 내 컴퓨터에서만 접속을 받고, 아무것도 저장하거나 기록하지 않으며, 다른 사이트에서 아무것도 받아 오지 않고, 요청 횟수를 제한합니다. 다른 사람이 운영하는 주소에는 실제 비밀번호를 넣지 말라는 안내도 README에 적었습니다.
+
+**5. 공격 속도가 10배 낮게 잡혀 있었습니다**
+
+- 문제: 공개된 hashcat 벤치마크와 비교해 보니, 요즘 그래픽카드 한 장이 `zxcvbn`에서 가져온 초당 100억 회보다 빨랐습니다.
+- 해결: 공개된 측정값 8개를 모아 평균을 내고 초당 1000억 회로 바꾸었습니다. 그 결과 우리가 "강함"의 예시로 쓰던 비밀번호 하나가 "보통"으로 내려갔습니다. 보기 좋은 숫자를 남겨 두지 않고 화면 사진과 발표 자료의 예시를 바꾸었습니다.
+
+## 한계와 다음 계획
+
+**한계**
+
+- 시간은 측정값이 아니라 추정치입니다. 가장 빠른 공격 속도(초당 1000억 회)는 공개된 속도의 평균이고 대부분 그래픽카드 한 장 기준입니다. 실제 공격자는 카드를 여러 장 쓸 수 있습니다.
+- 사이트 자체는 실제 유출 데이터를 조회하지 않습니다. `zxcvbn`에 들어 있는 목록(흔한 비밀번호 약 3만 개)만 압니다. 예시 몇 개는 직접 대조해 보았지만, 방문자의 비밀번호를 조회하지는 않습니다.
+- 한국어 단어 목록이 작습니다(28개). 목록에 없는 한국어 단어는 여전히 무작위 글자로 취급합니다.
+- 한글 한 글자를 2350가지로 세는 것은 대략적인 값입니다.
+- `zxcvbn`은 72자까지만 읽으므로, 그보다 긴 비밀번호의 나머지 부분은 무작위로 취급합니다.
+- 인증서가 자체 서명이라 브라우저 경고가 뜨고, 서버는 Flask 개발용 서버입니다. 내 컴퓨터에서는 괜찮지만 공개 서비스에는 맞지 않습니다.
+- 요청 제한은 메모리에만 기록되어 서버를 다시 켜면 초기화됩니다.
+
+**다음 계획**
+
+- Have I Been Pwned의 범위 조회 방식으로 실제 유출 데이터와 대조하기. 해시의 앞 5글자만 전송합니다.
+- 고정된 목록 대신, 어떤 한국어 단어든 영문 자판 형태로 자동 변환하기.
+- 외우기 쉬운 문장형 비밀번호(무작위 단어 여러 개) 생성기 추가하기.
+- 사이트를 공개할 때는 방문자의 비밀번호가 기기를 떠나지 않도록 진단을 다시 브라우저에서 하기.
+- 운영용 서버와 정식 인증서로 배포하기.
+
+## 이 프로젝트에서 배운 점
+
+- 비밀번호 규칙과 비밀번호 강도는 다릅니다. 모든 규칙을 통과하고도 공격자가 가장 먼저 넣어 보는 비밀번호일 수 있습니다.
+- 길이가 가장 중요합니다. 무작위 글자가 하나 늘 때마다 공격자의 일이 문자 종류 수만큼 곱해집니다.
+- 보안에 쓰는 난수는 `random`이 아니라 암호학적 난수(`secrets`)에서 가져와야 합니다.
+- 라이브러리의 결과도 그대로 믿지 말고 확인해야 합니다. 무작위 비밀번호 문제는 실제 강도를 손으로 계산할 수 있는 비밀번호를 넣어 보았기 때문에 찾을 수 있었습니다.
+
+## 참고 자료
+
+- Daniel Lowe Wheeler, "zxcvbn: Low-Budget Password Strength Estimation", USENIX Security 2016. https://www.usenix.org/conference/usenixsecurity16/technical-sessions/presentation/wheeler
+- zxcvbn (Dropbox). 이 사이트가 쓰는 공격 방식 구분의 출처입니다. https://github.com/dropbox/zxcvbn
+- zxcvbn-python. 이 사이트가 쓰는 파이썬 버전입니다. https://github.com/dwolfhub/zxcvbn-python
+- 파이썬 `secrets` 모듈 문서. https://docs.python.org/3/library/secrets.html
+- NIST Special Publication 800-63B, Digital Identity Guidelines. 복잡도 규칙보다 길이가 중요하다는 지침입니다. https://pages.nist.gov/800-63-3/sp800-63b.html
+- Flask 문서. https://flask.palletsprojects.com/
+- Have I Been Pwned의 Pwned Passwords와 범위 조회 API. 위 유출 횟수의 출처입니다. https://haveibeenpwned.com/Passwords
+- Chick3nman의 hashcat 벤치마크(RTX 3090, RTX 4090, RTX 5090). 그래픽카드 한 장 속도의 출처입니다. https://gist.github.com/Chick3nman/e4fcee00cb6d82874dace72106d73fef · https://gist.github.com/Chick3nman/32e662a5bb63bc4f51b847bb422222fd · https://gist.github.com/Chick3nman/09bac0775e6393468c2925c1e1363d5c
+- Infosecurity Magazine, "GPU cluster can crack any NTLM 8-character hashed password in 5.5 hours". 2012년 클러스터 속도의 출처입니다. https://www.infosecurity-magazine.com/news/gpu-cluster-can-crack-any-ntlm-8-character-hashed
+- Hive Systems, "Are Your Passwords in the Green?". 매년 발표되는 비밀번호 해독 시간 표입니다. bcrypt와 무작위 비밀번호를 가정하므로 이 사이트의 숫자와 직접 비교할 수는 없습니다. https://www.hivesystems.com/blog/are-your-passwords-in-the-green-2025
+- Chae 외, "The Threat of Password Guessing Attacks Exploiting Linguistic Characteristics: A Case Study on the Korean Domains". 한국어 비밀번호에 관한 관련 연구입니다. https://pure.korea.ac.kr/en/publications/the-threat-of-password-guessing-attacks-exploiting-linguistic-cha/
+
+<!--
+포트폴리오로 쓰기 전에 직접 채울 항목입니다. 이 주석 표시를 지우기 전까지는 깃허브 화면에 보이지 않습니다.
+
+## 역할 분담
+- 이주안:
+- 장원준:
+- 정시우:
+
+## 내가 맡은 부분
+- 직접 만든 부분:
+- 내가 내린 결정과 그 이유:
+- 가장 어려웠던 점:
+
+## 사용한 도구
+- AI 도구를 어떻게 사용했는지, 지원하는 학교나 회사의 규정에 맞게 적습니다.
+-->
 
 ## 만든 사람
 
