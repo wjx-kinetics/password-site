@@ -346,4 +346,6 @@ pytest
 
 ## 만든 사람
 
-이주안 · 장원준 · 정시우 ∙ Seoul Robotics High School · [github.com/wjx-kinetics](https://github.com/wjx-kinetics)
+장원준 ∙ Seoul Robotics High School · [github.com/wjx-kinetics](https://github.com/wjx-kinetics)
+
+팀원: 이주안, 정시우
