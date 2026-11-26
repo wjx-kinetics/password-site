@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """비밀번호 금고지기: 비밀번호 진단 + 생성 (파이썬 Flask, HTTPS)
 
-실행:  python app.py            -> https://localhost:8443  (이 컴퓨터에서만 접속)
-       python app.py --lan      -> 같은 Wi-Fi의 다른 기기에서도 접속
+실행:  python app.py              -> https://localhost:8443  (이 컴퓨터에서만 접속, 브라우저 자동 열림)
+       python app.py --lan        -> 같은 Wi-Fi의 다른 기기에서도 접속
+       python app.py --port 9000  -> 다른 포트 사용
+       python app.py --no-browser -> 브라우저를 자동으로 열지 않음
 """
 import argparse
 import datetime
@@ -11,7 +13,10 @@ import math
 import re
 import secrets
 import socket
+import sys
+import threading
 import time
+import webbrowser
 from collections import defaultdict, deque
 from pathlib import Path
 
@@ -359,7 +364,15 @@ def main():
     parser = argparse.ArgumentParser(description="비밀번호 금고지기 HTTPS 서버")
     parser.add_argument("--port", type=int, default=8443)
     parser.add_argument("--lan", action="store_true", help="같은 네트워크의 다른 기기에서도 접속 허용")
+    parser.add_argument("--no-browser", action="store_true", help="브라우저를 자동으로 열지 않음")
     args = parser.parse_args()
+
+    try:                                   # 한글을 못 찍는 콘솔에서도 멈추지 않게
+        sys.stdout.reconfigure(errors="replace")
+    except (AttributeError, ValueError):
+        pass
+    if not args.no_browser:
+        threading.Timer(1.5, webbrowser.open, [f"https://localhost:{args.port}"]).start()
 
     host = "0.0.0.0" if args.lan else "127.0.0.1"
     print(f"\n  비밀번호 금고지기  ->  https://localhost:{args.port}")
